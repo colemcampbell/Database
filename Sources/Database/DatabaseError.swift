@@ -1,21 +1,20 @@
 //
 //  DatabaseError.swift
-//  SmartCalc
+//
 //
 //  Created by Cole Campbell on 10/19/19.
-//  Copyright © 2019 Black & Grey Studios. All rights reserved.
 //
 
 import Foundation
 
-enum DatabaseError {
+public enum DatabaseError {
     case writeFailure, deleteFailure, readFailure
 }
 
 // MARK: LocalizedError
 
 extension DatabaseError: LocalizedError {
-    var errorDescription: String? {
+    public var errorDescription: String? {
         let beginningOfMessage: String
         
         switch self {

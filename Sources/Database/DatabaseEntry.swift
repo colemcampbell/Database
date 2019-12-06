@@ -1,22 +1,27 @@
 //
 //  DatabaseEntry.swift
-//  SmartCalc
+//
 //
 //  Created by Cole Campbell on 10/23/19.
-//  Copyright © 2019 Black & Grey Studios. All rights reserved.
 //
 
 import Foundation
 import RealmSwift
 
-class DatabaseEntry: Object {
-    @objc dynamic var id: String = DatabaseEntry.formattedID
-    @objc dynamic var creationDate: Date = Date()
+public class DatabaseEntry: Object {
+    @objc public dynamic var id: String = DatabaseEntry.formattedID
+    @objc public dynamic var creationDate: Date = Date()
     
-    override static func primaryKey() -> String? {
+    public override static func primaryKey() -> String? {
         return "id"
     }
     
+    public override static func indexedProperties() -> [String] {
+        return ["creationDate"]
+    }
+}
+
+extension DatabaseEntry {
     private static var formattedID: String {
         let id = UUID().uuidString
         
