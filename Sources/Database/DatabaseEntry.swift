@@ -8,7 +8,7 @@
 import Foundation
 import RealmSwift
 
-public class DatabaseEntry: Object {
+open class DatabaseEntry: Object {
     @objc public dynamic var id: String = DatabaseEntry.formattedID
     @objc public dynamic var creationDate: Date = Date()
     
