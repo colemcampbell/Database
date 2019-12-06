@@ -66,14 +66,8 @@ extension Database {
         try self.delete(allEntries)
     }
     
-    public func containsEntry<T: DatabaseEntry>(ofType entryType: T.Type, withID id: String) throws -> Bool {
-        return try self.entry(ofType: entryType, withID: id) != nil ? true : false
-    }
-    
     public func entry<T: DatabaseEntry>(ofType entryType: T.Type, withID id: String) throws -> T? {
-        let realm = try Realm(configuration: self.configuration.realmConfiguration)
-        
-        return realm.object(ofType: entryType, forPrimaryKey: ["id": id])
+        return self.realm.object(ofType: entryType, forPrimaryKey: ["id": id])
     }
     
     public func newestEntry<T: DatabaseEntry>(ofType entryType: T.Type) -> T? {
