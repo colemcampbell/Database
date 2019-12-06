@@ -11,21 +11,23 @@ import RealmSwift
 public class Database {
     public let configuration: Database.Configuration
     
-    public init(configuration: Database.Configuration) {
+    private let realm: Realm
+    
+    public init(configuration: Database.Configuration) throws {
         self.configuration = configuration
+        self.realm = try Realm(configuration: self.configuration.realmConfiguration)
     }
     
-    public init() {
+    public init() throws {
         self.configuration = .default
+        self.realm = try Realm(configuration: self.configuration.realmConfiguration)
     }
 }
 
 extension Database {
     public func save<T: DatabaseEntry>(_ entry: T, withoutNotifying tokens: [NotificationToken] = []) throws {
-        let realm = try Realm(configuration: self.configuration.realmConfiguration)
-        
-        try realm.write(withoutNotifying: tokens) {
-            realm.add(entry)
+        try self.realm.write(withoutNotifying: tokens) {
+            self.realm.add(entry)
         }
     }
     
@@ -33,41 +35,33 @@ extension Database {
         var values = values
         values["id"] = entry.id
         
-        let realm = try Realm(configuration: self.configuration.realmConfiguration)
-        
-        try realm.write(withoutNotifying: tokens) {
-            realm.create(type(of: entry), value: values, update: .modified)
+        try self.realm.write(withoutNotifying: tokens) {
+            self.realm.create(type(of: entry), value: values, update: .modified)
         }
     }
     
-    public func overwrite<T: DatabaseEntry>(entryOfID id: String, withEntry entry: T, withoutNotifying tokens: [NotificationToken] = []) throws {
+    public func overwriteEntry<T: DatabaseEntry>(ofID id: String, with entry: T, withoutNotifying tokens: [NotificationToken] = []) throws {
         entry.id = id
         
-        let realm = try Realm(configuration: self.configuration.realmConfiguration)
-        
-        try realm.write(withoutNotifying: tokens) {
-            realm.add(entry, update: .all)
+        try self.realm.write(withoutNotifying: tokens) {
+            self.realm.add(entry, update: .all)
         }
     }
     
     public func delete<T: DatabaseEntry>(_ entry: T, withoutNotifying tokens: [NotificationToken] = []) throws {
-        let realm = try Realm(configuration: self.configuration.realmConfiguration)
-        
-        try realm.write(withoutNotifying: tokens) {
-            realm.delete(entry)
+        try self.realm.write(withoutNotifying: tokens) {
+            self.realm.delete(entry)
         }
     }
     
     public func delete<T: DatabaseEntry>(_ entries: Results<T>, withoutNotifying tokens: [NotificationToken] = []) throws {
-        let realm = try Realm(configuration: self.configuration.realmConfiguration)
-        
-        try realm.write(withoutNotifying: tokens) {
-            realm.delete(entries)
+        try self.realm.write(withoutNotifying: tokens) {
+            self.realm.delete(entries)
         }
     }
     
     public func deleteAllEntries<T: DatabaseEntry>(ofType entryType: T.Type, withoutNotifying tokens: [NotificationToken] = []) throws {
-        let allEntries = try self.entries(ofType: entryType)
+        let allEntries = self.entries(ofType: entryType)
         
         try self.delete(allEntries)
     }
@@ -82,18 +76,16 @@ extension Database {
         return realm.object(ofType: entryType, forPrimaryKey: ["id": id])
     }
     
-    public func newestEntry<T: DatabaseEntry>(ofType entryType: T.Type) throws -> T? {
-        return try self.entries(ofType: entryType, sortedBy: .newestFirst).first
+    public func newestEntry<T: DatabaseEntry>(ofType entryType: T.Type) -> T? {
+        return self.entries(ofType: entryType, sortedBy: .newestFirst).first
     }
     
-    public func oldestEntry<T: DatabaseEntry>(ofType entryType: T.Type) throws -> T? {
-        return try self.entries(ofType: entryType, sortedBy: .oldestFirst).first
+    public func oldestEntry<T: DatabaseEntry>(ofType entryType: T.Type) -> T? {
+        return self.entries(ofType: entryType, sortedBy: .oldestFirst).first
     }
     
-    public func entries<T: DatabaseEntry>(ofType entryType: T.Type, sortedBy sortPredicate: Database.SortPredicate = .none) throws -> Results<T> {
-        let realm = try Realm(configuration: self.configuration.realmConfiguration)
-        
-        var entries = realm.objects(entryType)
+    public func entries<T: DatabaseEntry>(ofType entryType: T.Type, sortedBy sortPredicate: Database.SortPredicate = .none) -> Results<T> {
+        var entries = self.realm.objects(entryType)
         
         switch sortPredicate {
             case .none:
