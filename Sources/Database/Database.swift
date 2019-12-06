@@ -17,11 +17,6 @@ public class Database {
         self.configuration = configuration
         self.realm = try Realm(configuration: self.configuration.realmConfiguration)
     }
-    
-    public init() throws {
-        self.configuration = .default
-        self.realm = try Realm(configuration: self.configuration.realmConfiguration)
-    }
 }
 
 extension Database {
