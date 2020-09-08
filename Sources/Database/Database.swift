@@ -26,18 +26,25 @@ extension Database {
         }
     }
     
-    public func update<T: DatabaseEntry>(_ entry: T, with values: [String: Any], withoutNotifying tokens: [NotificationToken] = []) throws {
+    public func update<T: DatabaseEntry>(_ entry: T, with values: [String: DatabaseEntryProperty], withoutNotifying tokens: [NotificationToken] = []) throws {
         var values = values
-        values["id"] = entry.id
+        
+        guard
+            let primaryKey = type(of: entry).primaryKey(),
+            let primaryKeyValue = entry[primaryKey] as? DatabaseEntryPrimaryKey
+        else {
+            throw DatabaseError.primaryKeyNotFound
+        }
+        
+        values[primaryKey] = primaryKeyValue
+        values["updatedAt"] = Date()
         
         try self.realm.write(withoutNotifying: tokens) {
             self.realm.create(type(of: entry), value: values, update: .modified)
         }
     }
     
-    public func overwriteEntry<T: DatabaseEntry>(ofID id: String, with entry: T, withoutNotifying tokens: [NotificationToken] = []) throws {
-        entry.id = id
-        
+    public func overwrite<T: DatabaseEntry>(_ entry: T, withoutNotifying tokens: [NotificationToken] = []) throws {
         try self.realm.write(withoutNotifying: tokens) {
             self.realm.add(entry, update: .all)
         }
@@ -55,34 +62,34 @@ extension Database {
         }
     }
     
-    public func deleteAllEntries<T: DatabaseEntry>(ofType entryType: T.Type, withoutNotifying tokens: [NotificationToken] = []) throws {
+    public func deleteAll<T: DatabaseEntry>(_ entryType: T.Type, withoutNotifying tokens: [NotificationToken] = []) throws {
         let allEntries = self.entries(ofType: entryType)
         
-        try self.delete(allEntries)
+        try self.delete(allEntries, withoutNotifying: tokens)
     }
     
-    public func entry<T: DatabaseEntry>(ofType entryType: T.Type, withID id: String) throws -> T? {
-        return self.realm.object(ofType: entryType, forPrimaryKey: ["id": id])
+    public func entry<T: DatabaseEntry>(ofType entryType: T.Type, withPrimaryKey primaryKey: DatabaseEntryPrimaryKey) -> T? {
+        self.realm.object(ofType: entryType, forPrimaryKey: primaryKey)
     }
     
     public func newestEntry<T: DatabaseEntry>(ofType entryType: T.Type) -> T? {
-        return self.entries(ofType: entryType, sortedBy: .newestFirst).first
+        self.entries(ofType: entryType, sortedBy: .newestFirst).first
     }
     
     public func oldestEntry<T: DatabaseEntry>(ofType entryType: T.Type) -> T? {
-        return self.entries(ofType: entryType, sortedBy: .oldestFirst).first
+        self.entries(ofType: entryType, sortedBy: .oldestFirst).first
     }
     
     public func entries<T: DatabaseEntry>(ofType entryType: T.Type, sortedBy sortPredicate: Database.SortPredicate = .none) -> Results<T> {
         var entries = self.realm.objects(entryType)
         
         switch sortPredicate {
-            case .none:
-                break
-            case .oldestFirst:
-                entries = entries.sorted(byKeyPath: "creationDate", ascending: true)
-            case .newestFirst:
-                entries = entries.sorted(byKeyPath: "creationDate", ascending: false)
+        case .none:
+            break
+        case .oldestFirst:
+            entries = entries.sorted(byKeyPath: "creationDate", ascending: true)
+        case .newestFirst:
+            entries = entries.sorted(byKeyPath: "creationDate", ascending: false)
         }
         
         return entries

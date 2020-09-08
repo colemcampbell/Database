@@ -9,27 +9,10 @@ import Foundation
 import RealmSwift
 
 open class DatabaseEntry: Object {
-    @objc public dynamic var id: String = DatabaseEntry.formattedID
-    @objc public dynamic var creationDate: Date = Date()
-    
-    public override static func primaryKey() -> String? {
-        return "id"
-    }
+    @objc public dynamic var createdAt: Date = Date()
+    @objc public dynamic var updatedAt: Date = Date()
     
     public override static func indexedProperties() -> [String] {
-        return ["creationDate"]
-    }
-}
-
-extension DatabaseEntry {
-    private static var formattedID: String {
-        let id = UUID().uuidString
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
-        
-        let date = dateFormatter.string(from: Date())
-        
-        return id + " " + date
+        ["createdAt"]
     }
 }
